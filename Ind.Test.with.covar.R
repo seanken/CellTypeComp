@@ -9,7 +9,7 @@ source("/stanley/levin_dr/ssimmons/TestCellComp/Code_Expanded/Propel/propel.core
 
 
 ##Fisher Exact
-test_fisher<-function(meta,condition,celltype)
+test_covar_fisher<-function(meta,condition,celltype)
 {
 meta["Cond"]=factor(meta[,condition])
 celltypes=unique(meta[,celltype])
@@ -26,7 +26,7 @@ return(res)
 }
 
 ##Test Chi Squared
-test_chi<-function(meta,condition,celltype)
+test_covar_chi<-function(meta,condition,celltype)
 {
 meta["Cond"]=factor(meta[,condition])
 res=c()
@@ -46,7 +46,7 @@ return(res)
 
 
 ##Logistic Regression
-test_logistic<-function(meta,condition,celltype,covar)
+test_covar_logistic<-function(meta,condition,celltype,covar)
 {
 meta["CellType"]=meta[,celltype]
 meta["Cond"]=meta[,condition]
@@ -69,7 +69,7 @@ return(res)
 
 
 ##Direchlet
-test_direchlet<-function(meta,condition,celltype,individual,covar,method="common",basetype="")
+test_covar_direchlet<-function(meta,condition,celltype,individual,covar,method="common",basetype="")
 {
 meta=meta[,c(condition,celltype,individual,covar)]
 colnames(meta)=c("Cond","CellType","Ind","Covar")
@@ -104,16 +104,16 @@ return(res)
 
 
 ##Direchlet Alternative
-test_direchlet_base<-function(meta,condition,celltype,individual,basetype,covar)
+test_covar_direchlet_base<-function(meta,condition,celltype,individual,basetype,covar)
 {
 meta[celltype]=factor(meta[,celltype])
 meta[celltype]=relevel(meta[,celltype],ref=basetype)
-return(test_direchlet(meta,condition,celltype,individual,covar,method="alternative",basetype=basetype))
+return(test_covar_direchlet(meta,condition,celltype,individual,covar,method="alternative",basetype=basetype))
 }
 
 
 ##multinomial model--just calls the multinomial model with no random effects and no overdisplersion
-test_multi<-function(meta,condition,celltype,individual,basetype,covar)
+test_covar_multi<-function(meta,condition,celltype,individual,basetype,covar)
 {
 meta=meta[,c(condition,celltype,individual,covar)]
 colnames(meta)=c("Cond","CellType","Ind","Covar")
@@ -129,7 +129,7 @@ return(res)
 
 
 ##multinomial mixed model with overdispersion
-test_multi_mixed_overdisp<-function(meta,condition,celltype,individual,basetype,covar,overdisp="Afroz")
+test_covar_multi_mixed_overdisp<-function(meta,condition,celltype,individual,basetype,covar,overdisp="Afroz")
 {
 meta=meta[,c(condition,celltype,individual,covar)]
 colnames(meta)=c("Cond","CellType","Ind","Covar")
@@ -149,35 +149,35 @@ return(res)
 
 
 ##multinomial mixed model with overdispersion v2
-test_multi_mixed_overdisp_v2<-function(meta,condition,celltype,individual,basetype,covar)
+test_covar_multi_mixed_overdisp_v2<-function(meta,condition,celltype,individual,basetype,covar)
 {
-return(test_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,covar,overdisp="Fletcher"))
+return(test_covar_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,covar,overdisp="Fletcher"))
 }
 
 ##multinomial mixed model with overdispersion v3
-test_multi_mixed_overdisp_v3<-function(meta,condition,celltype,individual,basetype,covar)
+test_covar_multi_mixed_overdisp_v3<-function(meta,condition,celltype,individual,basetype,covar)
 {
-return(test_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,covar,overdisp="Pearson"))
+return(test_covar_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,covar,overdisp="Pearson"))
 }
 
 ##multinomial mixed model with overdispersion v4
-test_multi_mixed_overdisp_v4<-function(meta,condition,celltype,individual,basetype,covar)
+test_covar_multi_mixed_overdisp_v4<-function(meta,condition,celltype,individual,basetype,covar)
 {
-return(test_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,covar,overdisp="Deviance"))
+return(test_covar_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,covar,overdisp="Deviance"))
 }
 
 
 ##multinomial mixed model with no overdispersion
-test_multi_mixed<-function(meta,condition,celltype,individual,basetype,covar)
+test_covar_multi_mixed<-function(meta,condition,celltype,individual,basetype,covar)
 {
-return(test_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,covar,overdisp=F))
+return(test_covar_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,covar,overdisp=F))
 }
 
 
 
 
 ##Poisson Regression
-test_nb<-function(meta,condition,celltype,individual,covar)
+test_covar_nb<-function(meta,condition,celltype,individual,covar)
 {
 meta=meta[,c(condition,celltype,individual,covar)]
 colnames(meta)=c("Cond","CellType","Ind","Covar")
@@ -202,7 +202,7 @@ return(res)
 
 
 ##Poisson Regression
-test_poisson<-function(meta,condition,celltype,individual,covar)
+test_covar_poisson<-function(meta,condition,celltype,individual,covar)
 {
 meta=meta[,c(condition,celltype,individual,covar)]
 colnames(meta)=c("Cond","CellType","Ind","Covar")
@@ -226,7 +226,7 @@ return(res)
 }
 
 ##logistic mixed model
-test_logistic_mixed<-function(meta,condition,celltype,individual,covar)
+test_covar_logistic_mixed<-function(meta,condition,celltype,individual,covar)
 {
 meta=meta[,c(condition,celltype,individual,covar)]
 colnames(meta)=c("Cond","CellType","Ind","Covar")
@@ -252,7 +252,7 @@ return(res)
 
 
 ##Wilcoxen test with base
-test_wilcox_base<-function(meta,condition,celltype,individual,basetype)
+test_covar_wilcox_base<-function(meta,condition,celltype,individual,basetype)
 {
 celltypes=unique(meta[,celltype])
 celltypes=celltypes[celltypes!=basetype]
@@ -280,7 +280,7 @@ return(res)
 
 
 ##Wilcoxen test without base
-test_wilcox<-function(meta,condition,celltype,individual)
+test_covar_wilcox<-function(meta,condition,celltype,individual)
 {
 celltypes=unique(meta[,celltype])
 meta=meta[,c(condition,celltype,individual)]
@@ -310,7 +310,7 @@ return(res)
 ##multiple regression on cell # with scaling by base
 
 
-test_propel<-function(meta,condition,celltype,individual,covar,transform="asin")
+test_covar_propel<-function(meta,condition,celltype,individual,covar,transform="asin")
 {
 out=propeller(clusters=meta[,celltype],sample=meta[,individual],group=meta[,condition],transform=transform,covar=meta[,covar])
 pvals=out[,"P.Value"]

@@ -9,7 +9,7 @@ source("RunAll_covar.R")
 ##condition is the column containing condition info (case vs control, etc)
 ##condition_new is the column of perturbed conditions
 ##
-permuteIndividual<-function(meta,ID_loc,CellType,condition,condition_new)
+permuteIndividual_covar<-function(meta,ID_loc,CellType,condition,condition_new)
 {
 meta=meta[,c(ID_loc,condition,CellType)]
 colnames(meta)=c("ID_loc","condition","CellType")
@@ -28,7 +28,7 @@ return(meta)
 
 
 
-testResults<-function(seur,condition,celltype,basetype,individual,numPerm=1000)
+testResults_covar<-function(seur,condition,celltype,basetype,individual,numPerm=1000)
 {
 condition_new="cond_temp"
 meta=c()
@@ -51,7 +51,7 @@ else
 meta=seur@meta.data
 }
 
-meta=permuteIndividual(meta,individual,celltype,condition,condition_new)
+meta=permuteIndividual_covar(meta,individual,celltype,condition,condition_new)
 
 print(head(meta))
 print(" ")
@@ -61,7 +61,7 @@ print("New iter!")
 print(head(meta))
 print(i)
 dat=tryCatch({
-tmp=RunAll(meta,"condition","CellType",basetype,"ID_loc","Covar")
+tmp=RunAll_covar(meta,"condition","CellType",basetype,"ID_loc","Covar")
 #return(tmp)
 },error = function(err){
 print("Yuck!")
