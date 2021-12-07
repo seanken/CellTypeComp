@@ -3,8 +3,9 @@ library(dplyr)
 library(tidyr)
 library (DirichletReg)
 library(mclogit)
-
-
+library(MASS)
+library(DESeq2)
+source("/stanley/levin_dr/ssimmons/TestCellComp/Code_Expanded/Propel/propel.core.modified.R")
 
 
 ##Fisher Exact
@@ -50,6 +51,7 @@ test_logistic<-function(meta,condition,celltype)
 meta["CellType"]=meta[,celltype]
 meta["Cond"]=meta[,condition]
 celltypes=unique(meta[,celltype])
+print(celltypes)
 res=c()
 for(i in celltypes)
 {
@@ -111,13 +113,13 @@ return(test_direchlet(meta,condition,celltype,individual,method="alternative",ba
 
 
 ##multinomial model--just calls the multinomial model with no random effects and no overdisplersion
-test_multi<-function(meta,condition,celltype,individual,basetype)
+test_multi<-function(meta,condition,celltype,individual,basetype,overdisp=F)
 {
 meta=meta[,c(condition,celltype,individual)]
 colnames(meta)=c("Cond","CellType","Ind")
 meta["CellType"]=factor(meta[,"CellType"])
 meta[,"CellType"]=relevel(meta[,"CellType"],ref=basetype)
-res=mblogit(CellType~Cond,data=meta)
+res=mblogit(CellType~Cond,data=meta,dispersion=overdisp)
 mat=summary(res)$coefficients
 mat=mat[grep("Cond",rownames(mat)),]
 res=data.frame(mat)[,4]
@@ -133,6 +135,8 @@ meta=meta[,c(condition,celltype,individual)]
 colnames(meta)=c("Cond","CellType","Ind")
 meta["CellType"]=factor(meta[,"CellType"])
 meta[,"CellType"]=relevel(meta[,"CellType"],ref=basetype)
+meta["Ind"]=factor(meta[,"Ind"])
+meta["Cond"]=factor(meta[,"Cond"])
 res=mblogit(CellType~Cond,random=~1|Ind,data=meta,dispersion=overdisp)
 mat=summary(res)$coefficients
 mat=mat[grep("Cond",rownames(mat)),]
@@ -165,23 +169,29 @@ return(res)
 }
 
 
+##multinomial mixed model with overdispersion v2
+test_multi_overdisp_v1<-function(meta,condition,celltype,individual,basetype)
+{
+return(test_multi(meta,condition,celltype,individual,basetype,overdisp="Afroz"))
+}
+
 
 ##multinomial mixed model with overdispersion v2
-test_multi_mixed_overdisp_v2<-function(meta,condition,celltype,individual,basetype)
+test_multi_overdisp_v2<-function(meta,condition,celltype,individual,basetype)
 {
-return(test_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,overdisp="Fletcher"))
+return(test_multi(meta,condition,celltype,individual,basetype,overdisp="Fletcher"))
 }
 
 ##multinomial mixed model with overdispersion v3
-test_multi_mixed_overdisp_v3<-function(meta,condition,celltype,individual,basetype)
+test_multi_overdisp_v3<-function(meta,condition,celltype,individual,basetype)
 {
-return(test_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,overdisp="Pearson"))
+return(test_multi(meta,condition,celltype,individual,basetype,overdisp="Pearson"))
 }
 
 ##multinomial mixed model with overdispersion v4
-test_multi_mixed_overdisp_v4<-function(meta,condition,celltype,individual,basetype)
+test_multi_overdisp_v4<-function(meta,condition,celltype,individual,basetype)
 {
-return(test_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,overdisp="Deviance"))
+return(test_multi(meta,condition,celltype,individual,basetype,overdisp="Deviance"))
 }
 
 
@@ -193,6 +203,53 @@ return(test_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,ove
 
 
 
+##Poisson Regression
+test_nb<-function(meta,condition,celltype,individual)
+{
+meta=meta[,c(condition,celltype,individual)]
+colnames(meta)=c("Cond","CellType","Ind")
+tab<-meta %>% group_by(CellType,Ind,Cond) %>% summarise(Count=length(Ind)) %>% as.data.frame()
+tab2<-meta %>% group_by(Ind,Cond) %>% summarise(Tot=length(Ind)) %>% as.data.frame()
+tab=left_join(tab,tab2)
+tab["logTot"]=log(tab[,"Tot"])
+celltypes=unique(tab[,"CellType"])
+
+res<-as.numeric(lapply(celltypes,function(x){
+
+cur=tab[tab[,"CellType"]==x,]
+fit<-glm.nb(Count~offset(logTot)+Cond,data=cur)
+mat=summary(fit)$coefficients
+print(mat)
+return(mat[grep("^Cond",rownames(mat)),4])
+}))
+names(res)=celltypes
+return(res)
+
+}
+
+
+test_deseq2<-function(meta,condition,celltype,individual)
+{
+meta=meta[,c(condition,celltype,individual)]
+
+colnames(meta)=c("Cond","CellType","Ind")
+tab<-meta %>% group_by(CellType,Ind,Cond) %>% summarise(Count=length(Ind)) %>% spread(CellType,Count,fill=0) %>% as.data.frame()
+meta=tab[,c("Cond","Ind")]
+rownames(tab)=tab[,"Ind"]
+tab=tab[,3:dim(tab)[2]]
+tab=t(tab)
+lst=list()
+lst[["Counts"]]=tab
+lst[["meta"]]=meta
+dds <- DESeqDataSetFromMatrix(countData = tab,colData=meta,design=~Cond)
+dds <- DESeq(dds)
+res <- results(dds,cooksCutoff=F)
+res=data.frame(res)
+mrk=res
+res=res[,"pvalue"]
+names(res)=rownames(mrk)
+return(res)
+}
 
 
 ##Poisson Regression
@@ -218,6 +275,22 @@ names(res)=celltypes
 return(res)
 
 }
+
+
+
+
+
+##propel method
+test_propel<-function(meta,condition,celltype,individual,transform="asin")
+{
+out=propeller(clusters=meta[,celltype],sample=meta[,individual],group=meta[,condition],transform=transform)
+pvals=out[,"P.Value"]
+names(pvals)=out[,1]
+return(pvals)
+
+}
+
+
 
 ##logistic mixed model
 test_logistic_mixed<-function(meta,condition,celltype,individual)

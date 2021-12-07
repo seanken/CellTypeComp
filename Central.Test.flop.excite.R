@@ -27,7 +27,7 @@ return(meta)
 
 
 
-testResults<-function(seur,condition,celltype,basetype,individual,perc,numPerm=100)
+testResults<-function(seur,condition,celltype,basetype,individual,perc,numPerm=1000)
 {
 condition_new="cond_temp"
 meta=c()

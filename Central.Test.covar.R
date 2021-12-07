@@ -19,12 +19,16 @@ tab["condition"]=tab[,condition_new]
 colnames(meta)[2]="Covar"
 #meta=meta[,c("ID_loc","CellType")]
 meta=left_join(meta,tab)
+meta["Covar"]=factor(meta[,"Covar"])
+meta["CellType"]=factor(meta[,"CellType"])
+meta["condition"]=factor(meta[,"condition"])
+meta["ID_loc"]=factor(meta[,"ID_loc"])
 return(meta)
 }
 
 
 
-testResults<-function(seur,condition,celltype,basetype,individual,numPerm=100)
+testResults<-function(seur,condition,celltype,basetype,individual,numPerm=1000)
 {
 condition_new="cond_temp"
 meta=c()
@@ -48,6 +52,8 @@ meta=seur@meta.data
 }
 
 meta=permuteIndividual(meta,individual,celltype,condition,condition_new)
+
+print(head(meta))
 print(" ")
 print(" ")
 print(" ")

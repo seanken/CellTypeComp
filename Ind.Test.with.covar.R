@@ -1,9 +1,10 @@
+library(MASS)
 library(lme4)
 library(dplyr)
 library(tidyr)
 library (DirichletReg)
 library(mclogit)
-
+source("/stanley/levin_dr/ssimmons/TestCellComp/Code_Expanded/Propel/propel.core.modified.with.covar.R")
 
 
 
@@ -175,6 +176,30 @@ return(test_multi_mixed_overdisp(meta,condition,celltype,individual,basetype,cov
 
 
 
+##Poisson Regression
+test_nb<-function(meta,condition,celltype,individual,covar)
+{
+meta=meta[,c(condition,celltype,individual,covar)]
+colnames(meta)=c("Cond","CellType","Ind","Covar")
+tab<-meta %>% group_by(CellType,Ind,Cond,Covar) %>% summarise(Count=length(Ind)) %>% as.data.frame()
+tab2<-meta %>% group_by(Ind,Cond,Covar) %>% summarise(Tot=length(Ind)) %>% as.data.frame()
+tab=left_join(tab,tab2)
+tab["logTot"]=log(tab[,"Tot"])
+celltypes=unique(tab[,"CellType"])
+
+res<-as.numeric(lapply(celltypes,function(x){
+
+cur=tab[tab[,"CellType"]==x,]
+fit<-glm.nb(Count~offset(logTot)+Cond+Covar,data=cur)
+mat=summary(fit)$coefficients
+print(mat)
+return(mat[grep("^Cond",rownames(mat)),4])
+}))
+names(res)=celltypes
+return(res)
+
+}
+
 
 ##Poisson Regression
 test_poisson<-function(meta,condition,celltype,individual,covar)
@@ -285,5 +310,12 @@ return(res)
 ##multiple regression on cell # with scaling by base
 
 
+test_propel<-function(meta,condition,celltype,individual,covar,transform="asin")
+{
+out=propeller(clusters=meta[,celltype],sample=meta[,individual],group=meta[,condition],transform=transform,covar=meta[,covar])
+pvals=out[,"P.Value"]
+names(pvals)=out[,1]
+return(pvals)
 
+}
 
