@@ -1,3 +1,7 @@
+##
+##This code was taken from https://github.com/Oshlack/speckle and modified to work with our pipeline.
+##
+
 library(Matrix)
 library(limma)
 
